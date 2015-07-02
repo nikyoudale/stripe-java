@@ -223,7 +223,7 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 					throw new InvalidRequestException("You cannot set '"+key+"' to an empty string. "+
 										"We interpret empty strings as null in requests. "+
 										"You may set '"+key+"' to null to delete the property.",
-										key, null);
+										key, null, null);
 			} else if (value == null) {
 				flatParams.put(key, "");
 			} else {
@@ -366,8 +366,8 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 
 			String requestId = "";
 			Map<String, List<String>> headers = response.getResponseHeaders();
-			List<String> requestIdList = headers.get("Request-Id")
-			if (requestIdList.size() > 0) {
+			List<String> requestIdList = headers.get("Request-Id");
+			if (requestIdList != null && requestIdList.size() > 0) {
 				requestId = requestIdList.get(0);
 			}
 
@@ -402,7 +402,7 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 			throw new InvalidRequestException("Unable to encode parameters to "
 					+ APIResource.CHARSET
 					+ ". Please contact support@stripe.com for assistance.",
-					null, e);
+					null, null, e);
 		}
 
 		try {
@@ -430,7 +430,7 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 		if (method != APIResource.RequestMethod.POST) {
 			throw new InvalidRequestException(
 					"Multipart requests for HTTP methods other than POST "
-							+ "are currently not supported.", null, null);
+							+ "are currently not supported.", null, null, null);
 		}
 
 		java.net.HttpURLConnection conn = null;
@@ -456,16 +456,16 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 						File currentFile = (File) value;
 						if (!currentFile.exists()) {
 							throw new InvalidRequestException("File for key "
-									+ key + " must exist.", null, null);
+									+ key + " must exist.", null, null, null);
 						} else if (!currentFile.isFile()) {
 							throw new InvalidRequestException("File for key "
 									+ key
 									+ " must be a file and not a directory.",
-									null, null);
+									null, null, null);
 						} else if (!currentFile.canRead()) {
 							throw new InvalidRequestException(
 									"Must have read permissions on file for key "
-									+ key + ".", null, null);
+									+ key + ".", null, null, null);
 						}
 						multipartProcessor.addFileField(key, currentFile);
 					} else {
@@ -517,13 +517,13 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 				LiveStripeResponseGetter.ErrorContainer.class).error;
 		switch (rCode) {
 		case 400:
-			throw new InvalidRequestException(error.message, error.param, null);
+			throw new InvalidRequestException(error.message, requestId, error.param, null);
 		case 404:
-			throw new InvalidRequestException(error.message, error.param, null);
+			throw new InvalidRequestException(error.message, requestId, error.param, null);
 		case 401:
 			throw new AuthenticationException(error.message);
 		case 402:
-			throw new CardException(error.message, error.code, error.param, error.decline_code, error.charge, null);
+			throw new CardException(error.message, requestId, error.code, error.param, error.decline_code, error.charge, null);
 		default:
 			throw new APIException(error.message, null);
 		}
