@@ -363,8 +363,16 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 			}
 			int rCode = response.responseCode;
 			String rBody = response.responseBody;
+
+			String requestId = "";
+			Map<String, List<String>> headers = response.getResponseHeaders();
+			List<String> requestIdList = headers.get("Request-Id")
+			if (requestIdList.size() > 0) {
+				requestId = requestIdList.get(0);
+			}
+
 			if (rCode < 200 || rCode >= 300) {
-				handleAPIError(rBody, rCode);
+				handleAPIError(rBody, rCode, requestId);
 			}
 			return APIResource.GSON.fromJson(rBody, clazz);
 		} finally {
@@ -502,7 +510,7 @@ public class LiveStripeResponseGetter implements StripeResponseGetter {
 
 	}
 
-	private static void handleAPIError(String rBody, int rCode)
+	private static void handleAPIError(String rBody, int rCode, String requestId)
 			throws InvalidRequestException, AuthenticationException,
 			CardException, APIException {
 		LiveStripeResponseGetter.Error error = APIResource.GSON.fromJson(rBody,
